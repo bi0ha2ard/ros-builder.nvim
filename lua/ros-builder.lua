@@ -1,15 +1,12 @@
-local lsputil = require('lspconfig.util')
 local Path = require('plenary.path')
 local scan = require("plenary.scandir")
-local ros_pattern = lsputil.root_pattern("package.xml")
+local builders = require("ros-builder.builders")
 
 -- Autogroup for ROS helpers
 local grp = vim.api.nvim_create_augroup("ros-builder", { clear = true })
 
 -- Map of active autorun autocmds
 local active_autoruns = {}
-
-local builders = require("ros-builder.builders")
 
 local test_name_candidate = function(bufno)
   if not (vim.bo[bufno].filetype == "cpp") then
@@ -22,14 +19,34 @@ local test_name_candidate = function(bufno)
   end
 end
 
+-- type can be "file" or "directory"
+-- if path is nil, uses cwd
+local find_pattern = function(pattern, type, path)
+  type = type or "file"
+  res = vim.fs.find(pattern, {upward = true, type = type, path = path})
+  if vim.tbl_isempty(res) then
+    return nil
+  end
+  return vim.fs.dirname(res[1])
+end
+
+local ros_pattern = function(path)
+  return find_pattern("package.xml", "file", path)
+end
+
+local catkin_pattern = function(path)
+  return find_pattern(".catkin_tools", "directory", path)
+end
+
+local colcon_pattern = function(path)
+  return find_pattern(".built_by", "file", path)
+end
+
+
 local M = {}
 
-M.guess_build_system = function()
-  if vim.fn.executable("ros2") == 1 then
-    return "colcon"
-  else
-    return "catkin"
-  end
+M.detect_workspace = function(path)
+  return catkin_pattern(path) or colcon_pattern(path)
 end
 
 M.pkg_name = function(name)
@@ -187,7 +204,7 @@ M.test_package = function(pkg)
 end
 
 M._opts = {
-  build_system = M.guess_build_system(),
+  build_system = builders.guess_build_system(),
   write_before_build = true, -- Whether to write current file before building
   run_test = true, -- Whether to run tests after building them
   launcher = require("ros-builder.launchers").cmd,
@@ -201,7 +218,7 @@ M._keybinds = {
 
 M.setup = function(opts)
   opts = opts or {}
-  M._workspace = opts.workspace
+  M._workspace = opts.workspace or M.detect_workspace()
   M._opts = vim.tbl_deep_extend("force", M._opts, opts.options or {})
   M._keybinds = vim.tbl_deep_extend("force", M._keybinds, opts.keys or {})
   builders.setup(opts.systems)
