@@ -60,7 +60,7 @@ M.pkg_name = function(name)
 end
 
 local function setup_test(bufno, pkg_name)
-  local ws = M._workspace
+  local ws = M._opts.workspace
   if not ws then
     return
   end
@@ -174,7 +174,7 @@ M.deactivate_autorun = function()
 end
 
 local prepare_and_check_build = function()
-  if not M._workspace then
+  if not M._opts.workspace then
     vim.notify("'workspace' option must be set!", vim.log.levels.ERROR)
     return false
   end
@@ -192,7 +192,7 @@ M.build_package = function(pkg, test_name, test_exe)
     return
   end
   local bs = builders.systems[M._opts.build_system]
-  M._opts.launcher(bs.build(M._workspace, bs.opts, pkg, test_name, test_exe), M._workspace)
+  M._opts.launcher(bs.build(M._opts.workspace, bs.opts, pkg, test_name, test_exe), M._opts.workspace)
 end
 
 M.test_package = function(pkg)
@@ -200,7 +200,7 @@ M.test_package = function(pkg)
     return
   end
   local bs = builders.systems[M._opts.build_system]
-  M._opts.launcher(bs.test(M._workspace, bs.opts, pkg), M._workspace)
+  M._opts.launcher(bs.test(M._opts.workspace, bs.opts, pkg), M._opts.workspace)
 end
 
 function detect_launcher()
@@ -213,13 +213,13 @@ function detect_launcher()
 end
 
 M._opts = {
+  workspace = M.detect_workspace(),
   build_system = builders.guess_build_system(),
   write_before_build = true, -- Whether to write current file before building
   run_test = true, -- Whether to run tests after building them
   launcher = detect_launcher()
 }
 
-M._workspace = nil
 M._keybinds = {
   build = "<leader>b",
   test = "<leader>bt",
@@ -227,12 +227,11 @@ M._keybinds = {
 
 M.setup = function(opts)
   opts = opts or {}
-  M._workspace = opts.workspace or M.detect_workspace()
   M._opts = vim.tbl_deep_extend("force", M._opts, opts.options or {})
   M._keybinds = vim.tbl_deep_extend("force", M._keybinds, opts.keys or {})
   builders.setup(opts.systems)
 
-  if not M._workspace then
+  if not M._opts.workspace then
     -- vim.notify("Skipping ros autocommand hooks as workspace is not set.", vim.log.levels.DEBUG)
     return
   end
