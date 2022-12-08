@@ -203,11 +203,20 @@ M.test_package = function(pkg)
   M._opts.launcher(bs.test(M._workspace, bs.opts, pkg), M._workspace)
 end
 
+function detect_launcher()
+  local launchers = require("ros-builder.launchers")
+  if vim.fn.exists(":AsyncRun") > 0 then
+    return launchers.asyncrun
+  else
+    return launchers.terminal
+  end
+end
+
 M._opts = {
   build_system = builders.guess_build_system(),
   write_before_build = true, -- Whether to write current file before building
   run_test = true, -- Whether to run tests after building them
-  launcher = require("ros-builder.launchers").cmd,
+  launcher = detect_launcher()
 }
 
 M._workspace = nil
