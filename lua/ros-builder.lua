@@ -70,7 +70,7 @@ local function setup_test(bufno, pkg_name)
     -- just run test for the whole package
     vim.keymap.set("n", M._keybinds.test, function()
       M.test_package(pkg_name)
-    end, { buffer = bufno })
+    end, { buffer = bufno, desc = "Build and test ROS package" })
     return
   end
 
@@ -104,7 +104,7 @@ local function setup_test(bufno, pkg_name)
     function()
       M.build_package(pkg_name, test_name, test_exe)
     end,
-    { buffer = bufno }
+    { buffer = bufno, desc = "Build and run current test" }
   )
   vim.api.nvim_create_user_command("RosAutoRunTest", M.activate_autorun_test, {})
   vim.api.nvim_create_user_command("RosStopAutoRunTest", M.deactivate_autorun, {})
@@ -134,12 +134,10 @@ M.setup_ros_builder = function()
   end
   vim.b[bufno].ros_builder_package_name = pkg
   vim.b[bufno].ros_builder_package_path = p
-  vim.keymap.set("n", M._keybinds.build, function()
-    M.build_package(pkg)
-  end,
-  {
-    buffer = bufno
-  })
+  vim.keymap.set("n", M._keybinds.build,
+    function() M.build_package(pkg) end,
+    { buffer = bufno, desc = "Build ROS package" }
+  )
   setup_test(bufno, pkg)
 end
 
