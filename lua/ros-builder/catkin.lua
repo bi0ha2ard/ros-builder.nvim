@@ -1,7 +1,7 @@
 local M = {}
 
 M.build = function(ws, opts, pkg, test_name, test_exe)
-  local cmd = {"catkin", "build"}
+  local cmd = { "catkin", "build" }
   if opts.build then
     vim.list_extend(cmd, opts.build)
   end
@@ -12,16 +12,16 @@ M.build = function(ws, opts, pkg, test_name, test_exe)
   end
   table.insert(cmd, pkg)
   if test_name then
-    vim.list_extend(cmd, {"--no-deps", "--make-args", test_name})
+    vim.list_extend(cmd, { "--no-deps", "--make-args", test_name })
     if test_exe then
-      vim.list_extend(cmd, {"&&", test_exe})
+      vim.list_extend(cmd, { "&&", test_exe })
     end
   end
   return table.concat(cmd, " ")
 end
 
 M.test = function(ws, opts, pkg)
-  local cmd = {"catkin", "test", pkg}
+  local cmd = { "catkin", "test", pkg }
   return table.concat(cmd, " ")
 end
 

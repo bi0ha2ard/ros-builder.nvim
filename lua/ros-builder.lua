@@ -23,7 +23,7 @@ end
 -- if path is nil, uses cwd
 local find_pattern = function(pattern, type, path)
   type = type or "file"
-  res = vim.fs.find(pattern, {upward = true, type = type, path = path})
+  local res = vim.fs.find(pattern, { upward = true, type = type, path = path })
   if vim.tbl_isempty(res) then
     return nil
   end
@@ -83,14 +83,15 @@ local function setup_test(bufno, pkg_name)
   if vim.bo.filetype == "cpp" then
     vim.b[bufno].ros_builder_test_name = test_name
     if M._opts.build_system == "colcon" then
-      local build_dir = table.concat{ ws, "/build/", pkg_name, }
+      local build_dir = vim.fs.joinpath(ws, "build", pkg_name)
       vim.b[bufno].ros_builder_build_dir = build_dir
-      test_exe = scan.scan_dir(build_dir, {search_pattern = find_test})[1] or table.concat{build_dir, "/", test_name}
+      test_exe = scan.scan_dir(build_dir, { search_pattern = find_test, depth = 1 })[1] or
+          vim.fs.joinpath(build_dir, test_name)
       vim.b[bufno].ros_builder_test_executable = test_exe
     else
-      local build_dir = table.concat{ ws, "/devel/.private/", pkg_name, }
+      local build_dir = vim.fs.joinpath(ws, "devel", ".private", pkg_name)
       vim.b[bufno].ros_builder_build_dir = build_dir
-      test_exe = table.concat{build_dir, "/lib/", pkg_name, "/", test_name}
+      test_exe = vim.fs.joinpath(build_dir, "lib", pkg_name, test_name)
       vim.b[bufno].ros_builder_test_executable = test_exe
     end
   end
@@ -152,13 +153,14 @@ M.activate_autorun_test = function()
     vim.notify("Not part of a ROS package as far as we can tell", vim.log.levels.INFO)
     return
   end
-  active_autoruns[curr_buf] = vim.api.nvim_create_autocmd({"BufWrite"}, {
-      buffer = curr_buf,
-      callback = function()
-        M.build_package(vim.b[curr_buf].ros_builder_package_name, vim.b[curr_buf].ros_builder_test_name, vim.b[curr_buf].ros_builder_test_executable)
-      end,
-      group = grp,
-      desc = "Run ros test on write"
+  active_autoruns[curr_buf] = vim.api.nvim_create_autocmd({ "BufWrite" }, {
+    buffer = curr_buf,
+    callback = function()
+      M.build_package(vim.b[curr_buf].ros_builder_package_name, vim.b[curr_buf].ros_builder_test_name,
+        vim.b[curr_buf].ros_builder_test_executable)
+    end,
+    group = grp,
+    desc = "Run ros test on write"
   })
 end
 
@@ -201,7 +203,7 @@ M.test_package = function(pkg)
   M._opts.launcher(bs.test(M._opts.workspace, bs.opts, pkg), M._opts.workspace)
 end
 
-function detect_launcher()
+local function detect_launcher()
   local launchers = require("ros-builder.launchers")
   if vim.fn.exists(":AsyncRun") > 0 then
     return launchers.asyncrun
@@ -214,7 +216,7 @@ M._opts = {
   workspace = M.detect_workspace(),
   build_system = builders.guess_build_system(),
   write_before_build = true, -- Whether to write current file before building
-  run_test = true, -- Whether to run tests after building them
+  run_test = true,           -- Whether to run tests after building them
   launcher = detect_launcher()
 }
 
@@ -234,11 +236,11 @@ M.setup = function(opts)
     return
   end
 
-  vim.api.nvim_create_autocmd({"BufEnter"}, {
-      pattern = "*",
-      callback = M.setup_ros_builder,
-      group = grp,
-      desc = "Configures ROS specific bindings and commands for files"
+  vim.api.nvim_create_autocmd({ "BufEnter" }, {
+    pattern = "*",
+    callback = M.setup_ros_builder,
+    group = grp,
+    desc = "Configures ROS specific bindings and commands for files"
   })
 end
 
