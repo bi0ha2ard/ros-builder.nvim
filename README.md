@@ -8,10 +8,25 @@ Build and test your ROS1 and ROS2 packages with catkin or colcon!
 - Build and run tests for current package
 - Build and run current unit test
 - Rebuild and run test on write
+- Optionally uses [asyncrun](https://github.com/skywind3000/asyncrun.vim) to run builds
 
 ## Installation
 
-> NOTE: Requires nvim v0.9 with `vim.fs`!
+> NOTE: Requires neovim v0.9 or newer with `vim.fs` support!
+
+Installation with [lazy.nvim](https://github.com/folke/lazy.nvim), include the following spec:
+
+```lua
+{
+  "bi0ha2ard/ros-builder.nvim",
+  dependencies = {
+    'nvim-lua/plenary.nvim',
+    -- Optional, to use asyncrun as the launcher
+    'skywind3000/asyncrun.vim',
+  },
+  opts = {}
+},
+```
 
 Installation with [packer.nvim](https://github.com/wbthomason/packer.nvim):
 
@@ -27,8 +42,6 @@ return require('packer').startup(function(use)
   use 'skywind3000/asyncrun.vim'
 end
 ```
-
-Can use [asyncrun](https://github.com/skywind3000/asyncrun.vim) as launcher, if it's installed.
 
 ## Usage
 
@@ -55,7 +68,8 @@ Use `:RosStopAutoRunTest` to disable it again.
 ### Build system and workspace root
 
 The plugin tries to detect where the workspace root is and which build system to use.
-If ros2 is executable, it defaults to `colcon`, otherwise it selects `catkin`.
+If `ros2` is executable, it defaults to `colcon`, otherwise it selects `catkin`.
+If `ros2` and `ninja` are available, the `colcon_ninja` builder is selected.
 The workspace root is detected by the presence of a `.catkin_tools` folder or a `.built_by` file.
 
 You can also overwrite these by passing them to the `setup()` function:
@@ -92,6 +106,13 @@ Pass tables with options for the specific build system, for example:
 ```lua
 require("ros-builder").setup({
     systems = {
+      colcon_ninja = {
+        opts = {
+          cmake_args = {"-DCMAKE_CXX_FLAGS=-ggdb"},
+          mixins = {"compile-commands", "ccache"},
+          build = { "--symlink-install" },
+        },
+      },
       colcon = {
         opts = {
           cmake_args = {"-DCMAKE_CXX_FLAGS=-ggdb"},
@@ -121,6 +142,17 @@ require("ros-builder").setup({
         launcher = function(command, cwd)
           vim.cmd.terminal("cd " .. cwd .. " && " .. command)
         end
+    }
+})
+```
+
+Run with asyncrun in quickfix instead of the terminal:
+
+```lua
+local launcher = require('ros-builder.launchers').asyncrun_qf
+require("ros-builder").setup({
+    options = {
+        launcher = launcher,
     }
 })
 ```

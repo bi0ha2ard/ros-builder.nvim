@@ -5,6 +5,10 @@ M.asyncrun = function(cmd, cwd)
   vim.call("asyncrun#run", "", asyncrun_opts, cmd)
 end
 
+M.asyncrun_qf = function(cmd, cwd)
+  vim.call("asyncrun#run", "", { cwd = cwd }, cmd)
+end
+
 M.terminal = function(cmd, cwd)
   vim.cmd.terminal("cd " .. cwd .. " && " .. cmd)
 end
