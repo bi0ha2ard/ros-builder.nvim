@@ -82,10 +82,10 @@ local function setup_test(bufno, pkg_name)
   local test_exe = nil
   if vim.bo.filetype == "cpp" then
     vim.b[bufno].ros_builder_test_name = test_name
-    if M._opts.build_system == "colcon" then
+    if M._opts.build_system ~= "catkin" then
       local build_dir = vim.fs.joinpath(ws, "build", pkg_name)
       vim.b[bufno].ros_builder_build_dir = build_dir
-      test_exe = scan.scan_dir(build_dir, { search_pattern = find_test, depth = 1 })[1] or
+      test_exe = scan.scan_dir(build_dir, { search_pattern = find_test, depth = 2 })[1] or
           vim.fs.joinpath(build_dir, test_name)
       vim.b[bufno].ros_builder_test_executable = test_exe
     else
