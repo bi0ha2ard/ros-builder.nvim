@@ -38,15 +38,19 @@ local catkin_pattern = function(path)
   return find_pattern(".catkin_tools", "directory", path)
 end
 
+local colb_pattern = function(path)
+  return find_pattern(".colb.toml", "file", path)
+end
+
 local colcon_pattern = function(path)
-  return find_pattern(".built_by", "file", path)
+  return find_pattern("build", "directory", path)
 end
 
 
 local M = {}
 
 M.detect_workspace = function(path)
-  return catkin_pattern(path) or colcon_pattern(path)
+  return catkin_pattern(path) or colb_pattern(path) or colcon_pattern(path)
 end
 
 M.pkg_name = function(name)
