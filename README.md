@@ -68,9 +68,14 @@ Use `:RosStopAutoRunTest` to disable it again.
 ### Build system and workspace root
 
 The plugin tries to detect where the workspace root is and which build system to use.
-If `ros2` is executable, it defaults to `colcon`, otherwise it selects `catkin`.
-If `ros2` and `ninja` are available, the `colcon_ninja` builder is selected.
-The workspace root is detected by the presence of a `.catkin_tools` folder or a `.built_by` file.
+- If `ros2` is executable, it defaults to `colcon`, otherwise it selects `catkin`.
+- If `ros2` is available and [colb](https://github.com/bi0ha2ard/colb) is installed, the `colb` builder is selected.
+- If `ros2` and `ninja` are available, the `colcon_ninja` builder is selected.
+
+
+The workspace root is detected by the presence of a `.catkin_tools` folder, `.colb.toml` file, or a `build` directory.
+
+To check the detected configuration, run `:checkhealth ros-buildder`.
 
 You can also overwrite these by passing them to the `setup()` function:
 
@@ -85,6 +90,7 @@ require("ros-builder").setup({
 })
 
 ```
+
 
 ### Changing the mappings
 
